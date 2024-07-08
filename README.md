@@ -28,6 +28,8 @@ project/
 ```
 
 ## Requirements
+### Slack bolt for python
+Please refer to Slack website to set up your bot : https://slack.dev/bolt-python/tutorial/getting-started
 
 ### Python Packages
 
