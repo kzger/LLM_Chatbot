@@ -15,14 +15,10 @@ def start_loading_animation(app: App, say: Say, channel: str) -> str:
 
 def show_loading_animation(app: App, channel: str, ts: str) -> None:
     frame_index: int = 0
-    time_out = 10
     while not stop_loading:
         app.client.chat_update(channel=channel, ts=ts, text=loading_frames[frame_index])
         frame_index = (frame_index + 1) % len(loading_frames)
         time.sleep(1)
-        time_out -= 1
-        if time_out == 0:
-            stop_loading_animation(app, channel, ts, loading_frames[frame_index])
             
 def stop_loading_animation(app: App, channel: str, ts: str, final_text: str) -> None:
     global stop_loading
