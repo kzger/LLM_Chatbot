@@ -2,11 +2,10 @@ import requests
 import json
 from typing import List, Dict, Any
 
-def request_llava_chat(url: str, model: str, prompt: str, images: List[str]) -> str:
+def request_prompt_chat(url: str, model: str, messages: List[Dict[str, str]]) -> str:
     payload: Dict[str, Any] = {
         "model": model,
-        "prompt": prompt,
-        "images": images,
+        "messages": messages,
         "stream": False,
         "keep_alive": -1,
     }
@@ -14,7 +13,7 @@ def request_llava_chat(url: str, model: str, prompt: str, images: List[str]) -> 
         response = requests.post(url, json=payload)
         response.raise_for_status()
         response_dict = response.json()
-        response_content = response_dict.get('response')
+        response_content = response_dict.get('message', {}).get('content')
         return str(response_content) if response_content else "No content in response"
     except requests.exceptions.RequestException as e:
         return f"Request failed: {e}"

@@ -17,6 +17,7 @@ project/
 |   |-- llama_service.py
 |   |-- llava_service.py
 |   |-- loading_animation.py
+|   |-- prompt_service.py
 |-- config/
 |   |-- __init__.py
 |   |-- settings.py
