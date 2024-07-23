@@ -1,7 +1,7 @@
 from typing import List
 
 class LLModelList:
-    ZH_TW_L3_8B = "chinese_tw_Llama"
+    ZH_TW_L3_8B = "kenneth85/llama-3-taiwan:latest"
     LLAMA3_8B = "llama3:latest"
     LLAVA = "llava"
     PROMPT = "impactframes/llama3_ifai_sd_prompt_mkr_q4km:latest"

@@ -36,6 +36,7 @@ Please refer to Slack website to set up your bot : https://slack.dev/bolt-python
 
 Make sure you have the following Python packages installed:
 
+- line-bot-sdk
 - slack_bolt
 - slack_sdk
 - flask
@@ -45,7 +46,7 @@ Make sure you have the following Python packages installed:
 You can install these packages using the following command:
 
 ```bash
-pip install slack_bolt slack_sdk flask requests python-dotenv 
+pip install -r requirements.txt
 ```
 
 ### Environment Variables
@@ -53,6 +54,8 @@ pip install slack_bolt slack_sdk flask requests python-dotenv
 Create a `.env` file in the root directory of your project and add the following environment variables:
 
 ```
+LINE_CHANNEL_ACCESS_TOKEN=your-line-channel-access-token
+LINE_CHANNEL_SECRET=your-line-channel-secret
 SLACK_BOT_TOKEN=your-slack-bot-token
 SLACK_SIGNING_SECRET=your-slack-signing-secret
 SLACK_APP_TOKEN=your-slack-app-token 
