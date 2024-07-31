@@ -1,8 +1,8 @@
 import logging
+from typing import Dict, Any
 from slack_bolt import App
 from slack_bolt.context.say import Say
-from typing import Dict, Any
-from app.message_handler import handle_message
+from app.message_handler import handle_message, SlackHandler
 from services.loading_animation import start_loading_animation, stop_loading_animation
 
 logging.basicConfig(level=logging.ERROR)
@@ -36,7 +36,8 @@ def register_event_handlers(app: App) -> None:
         ts: str = start_loading_animation(app, say, event['channel'])
         
         # Handle the message
-        response: str = handle_message(event)
+        handler = SlackHandler(event)
+        response: str = handle_message(handler)
         
         # Delete user response info
         if user_id in responsing_list:

@@ -1,15 +1,17 @@
 import os
 import uuid
+from typing import Any
+
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, abort
 from slack_bolt import App
 from slack_bolt.adapter.flask import SlackRequestHandler
-from app.event_handler import register_event_handlers
-from config.settings import SLACK_BOT_TOKEN, LINE_CHANNEL_SECRET
-from typing import Any
-from app.message_handler import handle_message, initialize_models, LineHandler, GenericHandler
 from linebot.v3.webhook import WebhookHandler, InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, ImageMessageContent
+
+from app.event_handler import register_event_handlers
+from app.message_handler import handle_message, initialize_models, LineHandler, GenericHandler
+from config.settings import SLACK_BOT_TOKEN, LINE_CHANNEL_SECRET
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -55,7 +57,8 @@ def generate_prompt() -> Any:
             raise ValueError("No JSON payload received")
 
         if "sdxl" in event:
-            response = handle_message(GenericHandler(event))
+            handler = GenericHandler(event)
+            response = handle_message(handler)
             return jsonify({"status": "success", "response": response}), 200
 
         return jsonify({"status": "error", "message": "Missing sdxl data"}), 400
@@ -74,7 +77,8 @@ def receive_message() -> Any:
         if user_id is None or user_id not in user_uuid:
             return jsonify({"status": "error", "message": "uuid error"}), 400
 
-        response = handle_message(GenericHandler(event))
+        handler = GenericHandler(event)
+        response = handle_message(handler)
         return jsonify({"status": "success", "response": response}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400

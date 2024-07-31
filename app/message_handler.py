@@ -1,26 +1,31 @@
 import logging
 from collections import defaultdict, deque
 from typing import Dict, Deque, List, Any
+from threading import Lock
+from dataclasses import dataclass, field
+
+import requests
+from linebot.v3.messaging import Configuration, ApiClient, MessagingApi
+from linebot.v3.messaging.models import ReplyMessageRequest, TextMessage, ShowLoadingAnimationRequest
+
 from services.llama_service import request_llama_chat
 from services.llava_service import request_llava_chat
 from services.prompt_service import request_prompt_chat
 from app.utils import is_image_file, download_image, image_to_base64
 from config.settings import LLAMA_API_URL, LLAVA_API_URL, SLACK_BOT_TOKEN, LINE_CHANNEL_ACCESS_TOKEN
 from model.model_list import LLModelList
-import requests
-from threading import Lock
-from linebot.v3.messaging import Configuration, ApiClient, MessagingApi
-from linebot.v3.messaging.models import ReplyMessageRequest, TextMessage, ShowLoadingAnimationRequest
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# User conversation data
 user_conversations: Dict[str, Deque[Dict[str, str]]] = defaultdict(lambda: deque(maxlen=10))
 user_system_prompts: Dict[str, Deque[str]] = defaultdict(lambda: deque(maxlen=1))
 user_active_request: Dict[str, bool] = defaultdict(bool)
 user_locks: Dict[str, Lock] = defaultdict(Lock)
 
+# LINE Bot configuration
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 
 def initialize_models():
@@ -43,19 +48,9 @@ def handle_message(handler) -> Any:
         with user_locks[user_id]:
             user_active_request[user_id] = False
 
-def show_loading_animation(chat_id: str, loading_seconds: int):
-    url = "https://api.line.me/v2/bot/chat/loading/start"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
-    }
-    data = ShowLoadingAnimationRequest(chatId=chat_id, loadingSeconds=loading_seconds).to_json()
-    response = requests.post(url, headers=headers, data=data)
-    return response.json()
-
+@dataclass
 class GenericHandler:
-    def __init__(self, event: Dict[str, Any]):
-        self.event = event
+    event: Dict[str, Any]
 
     def get_user_id(self) -> str:
         return str(self.event.get("user"))
@@ -103,9 +98,8 @@ class GenericHandler:
     def reply_message(self, response_text: str) -> Any:
         raise NotImplementedError
 
+@dataclass
 class SlackHandler(GenericHandler):
-    def __init__(self, event: Dict[str, Any]):
-        super().__init__(event)
 
     def process_message(self) -> str:
         if "files" in self.event:
@@ -123,15 +117,22 @@ class SlackHandler(GenericHandler):
                     response += request_llava_chat(LLAVA_API_URL, LLModelList.LLAVA, text, [base64_image])
         return response
 
+@dataclass
 class LineHandler(GenericHandler):
-    def __init__(self, event: Dict[str, Any]):
-        super().__init__(event)
-        self.user_id = event["source"]["userId"]
-        self.message_type = event["message"]["type"]
-        self.text = event["message"].get("text", "")
-        self.source_type = event["source"]["type"]
-        self.reply_token = event["replyToken"]
-        self.quote_token = event["message"].get("quoteToken", "")
+    user_id: str = field(init=False)
+    message_type: str = field(init=False)
+    text: str = field(init=False, default="")
+    source_type: str = field(init=False)
+    reply_token: str = field(init=False)
+    quote_token: str = field(init=False, default="")
+
+    def __post_init__(self):
+        self.user_id = self.event["source"]["userId"]
+        self.message_type = self.event["message"]["type"]
+        self.text = self.event["message"].get("text", "")
+        self.source_type = self.event["source"]["type"]
+        self.reply_token = self.event["replyToken"]
+        self.quote_token = self.event["message"].get("quoteToken", "")
 
     def get_user_id(self) -> str:
         return self.user_id
