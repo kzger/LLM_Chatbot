@@ -79,7 +79,11 @@ class GenericHandler:
         user_conversations[user_id].append({"role": "user", "content": sdxl})
         messages: List[Dict[str, str]] = [{"role": "system", "content": prompt} for prompt in user_system_prompts[user_id]]
         messages += list(user_conversations[user_id])
+        
+        logger.info(f"Entering prompt model: {messages}")
         response: str = request_prompt_chat(LLAMA_API_URL, LLModelList.PROMPT, messages)
+        logger.info(f"Exiting prompt model: {response}")
+        
         if response:
             user_conversations[user_id].append({"role": "assistant", "content": response})
         return response
@@ -90,7 +94,11 @@ class GenericHandler:
         user_conversations[user_id].append({"role": "user", "content": text})
         messages: List[Dict[str, str]] = [{"role": "system", "content": prompt} for prompt in user_system_prompts[user_id]]
         messages += list(user_conversations[user_id])
+        
+        logger.info(f"Entering llama model (EN): {messages}")
         response: str = request_llama_chat(LLAMA_API_URL, LLModelList.LLAMA3_8B, messages)
+        logger.info(f"Exiting llama model (EN): {response}")
+        
         if response:
             user_conversations[user_id].append({"role": "assistant", "content": response})
         return response
@@ -114,7 +122,9 @@ class SlackHandler(GenericHandler):
                 image_content = download_image(file["url_private"], SLACK_BOT_TOKEN)
                 if image_content:
                     base64_image: str = image_to_base64(image_content)
+                    logger.info(f"Entering llava model with image: {text}, {base64_image}")
                     response += request_llava_chat(LLAVA_API_URL, LLModelList.LLAVA, text, [base64_image])
+                    logger.info(f"Exiting llava model: {response}")
         return response
 
 @dataclass
@@ -184,7 +194,11 @@ class LineHandler(GenericHandler):
         user_conversations[self.user_id].append({"role": "user", "content": self.text})
         messages: List[Dict[str, str]] = [{"role": "system", "content": prompt} for prompt in user_system_prompts[self.user_id]]
         messages += list(user_conversations[self.user_id])
+        
+        logger.info(f"Entering llama model (TW): {messages}")
         response: str = request_llama_chat(LLAMA_API_URL, LLModelList.ZH_TW_L3_8B, messages)
+        logger.info(f"Exiting llama model (TW): {response}")
+        
         if response:
             user_conversations[self.user_id].append({"role": "assistant", "content": response})
         return response
@@ -195,7 +209,11 @@ class LineHandler(GenericHandler):
         if not image_content:
             return "Failed to download image."
         base64_image: str = image_to_base64(image_content)
+        
+        logger.info(f"Entering llava model with image: {self.text}, {base64_image}")
         response = request_llava_chat(LLAVA_API_URL, LLModelList.LLAVA, self.text, [base64_image])
+        logger.info(f"Exiting llava model: {response}")
+        
         return response
 
     def get_line_image_url(self, message_id: str) -> str:
